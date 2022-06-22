@@ -1,12 +1,26 @@
 import os
+from tracemalloc import start
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+from sqlalchemy import all_
+
+from sympy import Q, re
 
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
+
+# paginate questions based on the given page number
+def paginate_questions(request, selection):
+    page = request.args.get('page', 1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
+
+    questions= [question.format() for question in selection]
+    current_questions = questions[start:end]
+    return current_questions
 
 def create_app(test_config=None):
     # create and configure the app
@@ -36,21 +50,16 @@ def create_app(test_config=None):
         return response
 
     """
-    @TODO:
-    Create an endpoint to handle GET requests
+    An endpoint to handle GET requests
     for all available categories.
     """
     @app.route("/categories")
     def categories():
         
-        categories = Category.query.order_by(Category.id).all()
-        
-        if len(categories) == 0:
-            abort(404)
-            
-        formated_category = {}
-        for category in categories:
-            formated_category[str(category.id)] = category.type
+        categories = Category.query.order_by(Category.id).all()    
+        formated_category = {category.id: category.type for category in categories}
+        # for category in categories:
+        #     formated_category[category.id] = category.type
         
         return jsonify(
             {
@@ -72,6 +81,27 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
+    @app.route('/questions')
+    def get_questions():
+
+        all_questions = Question.query.order_by(Question.id).all()
+        paginated_questions = paginate_questions(request, all_questions)
+
+        categories = Category.query.order_by(Category.id).all()    
+        formated_category = {category.id: category.type for category in categories}
+        
+        if len(paginated_questions) == 0:
+            abort(404)
+
+        return jsonify(
+            {
+                "success": True,
+                "questions": paginated_questions,
+                "total_questions":len(Question.query.all()),
+                "categories":formated_category,
+                "current_category":"History"
+            }
+        )
 
     """
     @TODO:
@@ -80,6 +110,22 @@ def create_app(test_config=None):
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
+    @app.route("/questions/<int:id>", methods=["DELETE"])
+    def delete_question(id):
+        try:
+
+            question = Question.query.filter(Question.id == id).one_or_none()
+            if question == None:
+                abort(404)
+            question.delete()
+            return jsonify(
+                {
+                    "success": True
+                }
+            )
+        except:
+            abort(422)
+    
 
     """
     @TODO:
@@ -156,6 +202,15 @@ def create_app(test_config=None):
             "message": "bad request"
             }
             ), 400
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify(
+            {
+                "success": False,
+                "error": 500,
+                "message": "internal server error"
+            }
+        )
 
     return app
 
