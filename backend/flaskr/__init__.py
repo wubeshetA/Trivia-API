@@ -1,5 +1,10 @@
+from crypt import methods
+import difflib
+from hashlib import new
+from multiprocessing.connection import answer_challenge
 import os
 from tracemalloc import start
+from unicodedata import category
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -70,7 +75,7 @@ def create_app(test_config=None):
 
 
     """
-    @TODO:
+
     Create an endpoint to handle GET requests for questions,
     including pagination (every 10 questions).
     This endpoint should return a list of questions,
@@ -89,7 +94,7 @@ def create_app(test_config=None):
 
         categories = Category.query.order_by(Category.id).all()    
         formated_category = {category.id: category.type for category in categories}
-        
+
         if len(paginated_questions) == 0:
             abort(404)
 
@@ -104,7 +109,7 @@ def create_app(test_config=None):
         )
 
     """
-    @TODO:
+    
     Create an endpoint to DELETE question using a question ID.
 
     TEST: When you click the trash icon next to a question, the question will be removed.
@@ -128,7 +133,6 @@ def create_app(test_config=None):
     
 
     """
-    @TODO:
     Create an endpoint to POST a new question,
     which will require the question and answer text,
     category, and difficulty score.
@@ -137,6 +141,50 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
+
+    @app.route('/questions', methods=['POST'])
+    def add_question():
+
+        try:
+            body = request.get_json()
+            question = body.get('question')
+            answer = body.get('answer')
+            difficulty = body.get('difficulty')
+            category = body.get('category')
+            
+            search_term = body.get('searchTerm')
+            if search_term:
+                selection = Question.query.order_by(Question.id).filter(Question.question.ilike("%{}%".format(search_term)))
+                paginated_questions = paginate_questions(request, selection)
+                
+
+                categories = Category.query.order_by(Category.id).all()    
+                formated_category = {category.id: category.type for category in categories}
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "questions": paginated_questions,
+                        "total_questions":len(Question.query.all()),
+                        "categories":formated_category,
+                        "current_category":"History"
+                    }
+                )
+
+
+            else:
+                new_question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
+                new_question.insert()
+
+                return jsonify(
+                {
+                    "success": True
+                }
+                ) 
+            
+        except:
+            abort(422)
+
 
     """
     @TODO:
@@ -148,6 +196,7 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     """
+
 
     """
     @TODO:

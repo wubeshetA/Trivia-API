@@ -1,6 +1,7 @@
 from cgitb import reset
 from dataclasses import dataclass
 import dataclasses
+from hashlib import new
 import os
 import unittest
 import json
@@ -22,6 +23,12 @@ class TriviaTestCase(unittest.TestCase):
         self.database_path = 'postgresql://{}:{}@{}/{}'.format('student', 'student','localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
+        self.new_question = {
+            "question": "what is the country that is  known as 'the land of origins'?",
+            "answer": "Ethiopia",
+            "difficulty": 4,
+            "category": 4
+            }
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -77,12 +84,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'resource not found')
     
     # test DELETE request ot delete a question with id
-    def test_delete_question(self):
-        res=self.client().delete('/questions/22')
-        data = json.loads(res.data)
+    # =============== UNCOMMNET THE FOLLOWING TEST====================
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
+    # def test_delete_question(self):
+    #     res=self.client().delete('/questions/22')
+    #     data = json.loads(res.data)
+
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
     
     # test DELETE  request if deletion fails
     def test_404_if_question_does_not_exist(self):
@@ -93,7 +102,37 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'unprocessable')
 
-    
+    # test POST request for adding a new question
+    def test_add_question(self):
+        res = self.client().post('/questions', json = self.new_question)
+        data = json.loads(res.data)
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+    # test POST request to add new question fails
+    # def test_422_if_add_question_fails(self):
+    #     res = self.client().post('/questions', json = self.new_question)
+    #     data = json.loads(res.data)
+    #     pass
+
+    # test POST request for searching questions
+    def test_search_questions(self):
+        res = self.client().post('/questions', json = {"searchTerm": "what is"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True) 
+    # test POST request for search with out result
+    def test_search_questions_without_result(self):
+        res = self.client().post('/questions', json = {"searchTerm": "This is random search term"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+
+
         
         
 
