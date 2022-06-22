@@ -14,18 +14,50 @@ def create_app(test_config=None):
     setup_db(app)
 
     """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    CORS(app, resources={
+        "/*" : {
+            "origins": "*"
+        }
+    })
 
     """
-    @TODO: Use the after_request decorator to set Access-Control-Allow
+    Use the after_request decorator to set Access-Control-Allow
     """
+    @app.after_request
+    def after_request(response):
+        response.headers.add(
+            "Access-Control-Allow-Headers", "Content-Type,Authorization,true"
+        )
+        response.headers.add(
+            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+        )
+        return response
 
     """
     @TODO:
     Create an endpoint to handle GET requests
     for all available categories.
     """
+    @app.route("/categories")
+    def categories():
+        
+        categories = Category.query.order_by(Category.id).all()
+        
+        if len(categories) == 0:
+            abort(404)
+            
+        formated_category = {}
+        for category in categories:
+            formated_category[str(category.id)] = category.type
+        
+        return jsonify(
+            {
+                "success": True,
+                "categories": formated_category
+            }
+        )
 
 
     """
@@ -93,10 +125,37 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
     Create error handlers for all expected errors
     including 404 and 422.
     """
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": 404,
+                    "message": "resource not found"}),
+            404,
+        )
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return (
+            jsonify({"success": False,
+            "error": 422,
+            "message": "unprocessable"}),
+            422,
+        )
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify(
+            {"success": False,
+            "error": 400,
+            "message": "bad request"
+            }
+            ), 400
 
     return app
 
