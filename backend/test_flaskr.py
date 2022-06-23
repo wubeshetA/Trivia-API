@@ -131,13 +131,22 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
+    # test GET request to get questions only from a particular category
+    def test_get_questions_from_category(self):
+        res = self.client().get('/categories/2/questions')
+        data = json.loads(res.data)
 
-
-        
-        
-
-
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['current_category'])
     
+    # test POST request for quizzes
+    def test_quizzes(self):
+        res = self.client().post('/quizzes', json = {'previous_questions':[None], 'quiz_category': None})
+    
+
+
 
 
 # Make the tests conveniently executable

@@ -1,7 +1,9 @@
 from crypt import methods
 import difflib
+from email.quoprimime import body_check
 from hashlib import new
 from multiprocessing.connection import answer_challenge
+from operator import ne
 import os
 from tracemalloc import start
 from unicodedata import category
@@ -23,7 +25,7 @@ def paginate_questions(request, selection):
     start = (page - 1) * QUESTIONS_PER_PAGE
     end = start + QUESTIONS_PER_PAGE
 
-    questions= [question.format() for question in selection]
+    questions = [question.format() for question in selection]
     current_questions = questions[start:end]
     return current_questions
 
@@ -142,6 +144,16 @@ def create_app(test_config=None):
     of the questions list in the "List" tab.
     """
 
+    """
+    Create a POST endpoint to get questions based on a search term.
+    It should return any questions for whom the search term
+    is a substring of the question.
+
+    TEST: Search by any phrase. The questions list will update to include
+    only question that include that string within their question.
+    Try using the word "title" to start.
+    """
+
     @app.route('/questions', methods=['POST'])
     def add_question():
 
@@ -154,7 +166,8 @@ def create_app(test_config=None):
             
             search_term = body.get('searchTerm')
             if search_term:
-                selection = Question.query.order_by(Question.id).filter(Question.question.ilike("%{}%".format(search_term)))
+                selection = (Question.query.order_by(Question.id)
+                .filter(Question.question.ilike("%{}%".format(search_term))))
                 paginated_questions = paginate_questions(request, selection)
                 
 
@@ -186,17 +199,6 @@ def create_app(test_config=None):
             abort(422)
 
 
-    """
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
-
 
     """
     @TODO:
@@ -206,6 +208,22 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     """
+
+    @app.route("/categories/<int:id>/questions")
+    def get_questions_for_category(id):
+
+        selection = Question.query.filter(Question.category == id).all()
+        paginated_questions = paginate_questions(request, selection)
+        category = Category.query.get(id)
+
+        return jsonify(
+            {
+              "success": True,
+              "questions": paginated_questions,  
+              "total_questions": len(Question.query.all()),
+              "current_category": category.type
+            }
+        )
 
     """
     @TODO:
@@ -218,6 +236,47 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+
+    @app.route("/quizzes", methods=["GET", "POST"])
+    def quizzes():
+
+        body = request.get_json()
+        previous_questions = body.get('previous_questions')
+        quiz_category = body.get('quiz_category')
+
+        # check if the user select 'All' questions or from category
+        # it query questions which their id is not found in previous_questions
+        # 'All' has an id of '0'
+        if quiz_category['id'] == 0:
+            avaliable_questions = (Question.query
+            .filter(Question.id.notin_(previous_questions))
+            .all())
+        # if user select category
+        else:
+            avaliable_questions = (Question.query.order_by(Question.id)
+            .filter(Question.category == quiz_category['id'])
+            .filter(Question.id.notin_(previous_questions)).all())
+
+        # if the user play all the avaliable questions
+        # and there are no more questions
+        if len(avaliable_questions) == 0:
+            print("================here I am empty================ ")
+            return jsonify(
+                {
+                    "question": False,
+                }
+            )
+        
+        # if there are avalible questions choose random one question from them
+        next_question = random.choice(avaliable_questions)
+
+        # return the choosen random question
+        return jsonify (
+            {
+                "success": True,
+                "question": next_question.format()
+            }
+        )
 
     """
     Create error handlers for all expected errors
