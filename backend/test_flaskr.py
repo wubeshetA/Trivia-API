@@ -54,14 +54,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['categories'])
 
-    # def test_404_get_no_categories(self):
-    #     res = self.client().get("/categories")
-    #     data = json.loads("{}")
-
-    #     self.assertEqual(res.status_code, 404)
-    #     self.assertEqual(data['success'], False)
-    #     self.assertEqual(data['message'], "resource not found")
-
+   
     # test Get request for getting paginated questions
     def test_get_paginated_questions(self):
         res= self.client().get("/questions")
@@ -86,12 +79,12 @@ class TriviaTestCase(unittest.TestCase):
     # test DELETE request ot delete a question with id
     # =============== UNCOMMNET THE FOLLOWING TEST====================
 
-    # def test_delete_question(self):
-    #     res=self.client().delete('/questions/22')
-    #     data = json.loads(res.data)
+    def test_delete_question(self):
+        res=self.client().delete('/questions/22')
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
     
     # test DELETE  request if deletion fails
     def test_404_if_question_does_not_exist(self):
@@ -110,13 +103,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
-    # test POST request to add new question fails
-    # def test_422_if_add_question_fails(self):
-    #     res = self.client().post('/questions', json = self.new_question)
-    #     data = json.loads(res.data)
-    #     pass
-
-    # test POST request for searching questions
+    
     def test_search_questions(self):
         res = self.client().post('/questions', json = {"searchTerm": "what is"})
         data = json.loads(res.data)
@@ -143,10 +130,21 @@ class TriviaTestCase(unittest.TestCase):
     
     # test POST request for quizzes
     def test_quizzes(self):
-        res = self.client().post('/quizzes', json = {'previous_questions':[None], 'quiz_category': None})
-    
 
+        res = self.client().post('/quizzes', json = {'previous_questions':[], 'quiz_category': {'type': 'Science', 'id': '1'}})
+        data= json.loads(res.data)
 
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+    # test POST request of quizzes with wrong parameters
+    def test_404_quizzes(self):
+        res = self.client().post('/quizzes', json={'wrong_previous_questions':[],'wrong_quiz_category': {'type': 'Engineering', 'id': 7}})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["message"], "unprocessable")
 
 
 # Make the tests conveniently executable
