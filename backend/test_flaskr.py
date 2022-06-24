@@ -40,11 +40,6 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
-
     # test GET request for /categories route
     def test_get_all_categories(self):
         res = self.client().get("/categories")
@@ -77,10 +72,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'resource not found')
     
     # test DELETE request ot delete a question with id
-    # =============== UNCOMMNET THE FOLLOWING TEST====================
-
     def test_delete_question(self):
-        res=self.client().delete('/questions/22')
+        res=self.client().delete('/questions/20')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -102,14 +95,14 @@ class TriviaTestCase(unittest.TestCase):
         
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-
-    
+    # test POST request for searchTerm
     def test_search_questions(self):
         res = self.client().post('/questions', json = {"searchTerm": "what is"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True) 
+
     # test POST request for search with out result
     def test_search_questions_without_result(self):
         res = self.client().post('/questions', json = {"searchTerm": "This is random search term"})
