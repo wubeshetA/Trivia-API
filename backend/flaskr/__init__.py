@@ -1,17 +1,7 @@
-from crypt import methods
-import difflib
-from email.quoprimime import body_check
-from hashlib import new
-from multiprocessing.connection import answer_challenge
-from operator import ne
-import os
-from tracemalloc import start
-from unicodedata import category
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
-from sqlalchemy import all_
 
 from sympy import Q, re
 
@@ -35,7 +25,7 @@ def create_app(test_config=None):
     setup_db(app)
 
     """
-    Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    Set up CORS. Allow '*' for origins.
     """
     CORS(app, resources={
         "/*" : {
@@ -201,7 +191,6 @@ def create_app(test_config=None):
 
 
     """
-    @TODO:
     Create a GET endpoint to get questions based on category.
 
     TEST: In the "List" tab / main screen, clicking on one of the
@@ -226,7 +215,7 @@ def create_app(test_config=None):
         )
 
     """
-    @TODO:
+ 
     Create a POST endpoint to get questions to play the quiz.
     This endpoint should take category and previous question parameters
     and return a random questions within the given category,
