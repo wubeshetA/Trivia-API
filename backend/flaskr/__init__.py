@@ -55,8 +55,6 @@ def create_app(test_config=None):
         
         categories = Category.query.order_by(Category.id).all()    
         formated_category = {category.id: category.type for category in categories}
-        # for category in categories:
-        #     formated_category[category.id] = category.type
         
         return jsonify(
             {
@@ -117,7 +115,8 @@ def create_app(test_config=None):
             question.delete()
             return jsonify(
                 {
-                    "success": True
+                    "success": True,
+                    "id": question.id
                 }
             )
         except:
