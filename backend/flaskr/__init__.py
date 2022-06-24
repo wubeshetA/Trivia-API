@@ -237,46 +237,54 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
 
-    @app.route("/quizzes", methods=["GET", "POST"])
+    @app.route("/quizzes", methods=["POST"])
     def quizzes():
 
         body = request.get_json()
-        previous_questions = body.get('previous_questions')
-        quiz_category = body.get('quiz_category')
-
+        
         # check if the user select 'All' questions or from category
         # it query questions which their id is not found in previous_questions
         # 'All' has an id of '0'
-        if quiz_category['id'] == 0:
-            avaliable_questions = (Question.query
-            .filter(Question.id.notin_(previous_questions))
-            .all())
-        # if user select category
-        else:
-            avaliable_questions = (Question.query.order_by(Question.id)
-            .filter(Question.category == quiz_category['id'])
-            .filter(Question.id.notin_(previous_questions)).all())
+        try:
+            # check if the the parameters are valid and provided
+            if not ('quiz_category' in body and 'previous_questions' in body):
+                abort(422)
 
-        # if the user play all the avaliable questions
-        # and there are no more questions
-        if len(avaliable_questions) == 0:
-            print("================here I am empty================ ")
-            return jsonify(
+            previous_questions = body.get('previous_questions')
+            quiz_category = body.get('quiz_category')
+
+            if quiz_category['id'] == 0:
+                avaliable_questions = (Question.query
+                .filter(Question.id.notin_(previous_questions))
+                .all())
+            # if user select category
+            else:
+                avaliable_questions = (Question.query.order_by(Question.id)
+                .filter(Question.category == quiz_category['id'])
+                .filter(Question.id.notin_(previous_questions)).all())
+
+            # if the user play all the avaliable questions
+            # and there are no more questions
+            if len(avaliable_questions) == 0:
+                print("================here I am empty================ ")
+                return jsonify(
+                    {
+                        "question": False,
+                    }
+                )
+            
+            # if there are avalible questions choose random one question from them
+            next_question = random.choice(avaliable_questions)
+
+            # return the choosen random question
+            return jsonify (
                 {
-                    "question": False,
+                    "success": True,
+                    "question": next_question.format()
                 }
             )
-        
-        # if there are avalible questions choose random one question from them
-        next_question = random.choice(avaliable_questions)
-
-        # return the choosen random question
-        return jsonify (
-            {
-                "success": True,
-                "question": next_question.format()
-            }
-        )
+        except:
+            abort (422)
 
     """
     Create error handlers for all expected errors
@@ -318,6 +326,15 @@ def create_app(test_config=None):
                 "error": 500,
                 "message": "internal server error"
             }
+        )
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify(
+            {
+                "success": False,
+                "error": 405,
+                "message": "method not allowed"
+                }
         )
 
     return app
