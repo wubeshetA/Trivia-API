@@ -275,6 +275,7 @@ The API will return five error types when requests fail:
 }
 ```
 # Deployment
+Currently this app is not deployed anywhere.
 # Authors
 - Backend/API : [Wubeshet Anegagrie Yimam](https://linkedin.com/in/wubeshet)
 - Frontend: Udacity team
