@@ -171,11 +171,12 @@ The API will return five error types when requests fail:
 ### DELETE /questions/{int}
 - General: 
     - Delete a question with the given id
-    - return success value
+    - return success value and id of deleted question
 - Sample: ```curl -X DELETE http://127.0.0.1:5000/questions/16```
 ```json
 {
-    "success": true 
+    "success": true,
+    "id": "16"
 }
 ```
 ### POST /questions
